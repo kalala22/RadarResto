@@ -1,8 +1,8 @@
 export type LatLng = { latitude: number; longitude: number };
 
 /**
- * Position simulée de l'utilisateur (Gombe), en attendant expo-location.
- * La vraie position sera branchée avec la carte (phase 5).
+ * Point de départ par défaut (Gombe) : utilisé tant que l'utilisateur n'a pas
+ * partagé sa position, ou s'il est hors de Kinshasa.
  */
 export const DEFAULT_USER_POSITION: LatLng = { latitude: -4.3065, longitude: 15.3045 };
 

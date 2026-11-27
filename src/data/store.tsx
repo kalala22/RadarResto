@@ -1,9 +1,13 @@
 /**
  * État de l'application gardé sur l'appareil (AsyncStorage) en attendant le backend :
- * onboarding vu, session simulée, profil, favoris et avis publiés.
+ * onboarding vu, session simulée, profil, favoris, avis publiés et recherches récentes.
+ * La position de l'utilisateur n'est jamais enregistrée.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+
+import { DEFAULT_USER_POSITION, type LatLng } from '@/lib/geo';
+import { askPermission, isInKinshasa, readPermission, readPosition, type LocationStatus } from '@/lib/location';
 
 import { getRanking, getReviews } from './repository';
 import type { Profile, RankedRestaurant, Review } from './types';
@@ -18,7 +22,11 @@ type PersistedState = {
   profile: Profile | null;
   favorites: string[];
   myReviews: Review[];
+  /** Dernières recherches, la plus récente d'abord. */
+  recentSearches: string[];
 };
+
+const MAX_RECENT_SEARCHES = 5;
 
 const INITIAL: PersistedState = {
   onboarded: false,
@@ -26,6 +34,7 @@ const INITIAL: PersistedState = {
   profile: null,
   favorites: [],
   myReviews: [],
+  recentSearches: [],
 };
 
 export function defaultProfile(name: string, phone: string): Profile {
@@ -51,6 +60,20 @@ type AppState = PersistedState & {
   updateProfile: (patch: Partial<Profile>) => void;
   toggleFavorite: (restaurantId: string) => void;
   addReview: (review: Review) => void;
+  addRecentSearch: (query: string) => void;
+  clearRecentSearches: () => void;
+  location: UserLocation;
+  /** Explique puis demande la permission ; renvoie vrai si la position est disponible. */
+  requestLocation: () => Promise<boolean>;
+  /** Point de départ des distances : la vraie position si possible, sinon la Gombe. */
+  userPosition: LatLng;
+};
+
+export type UserLocation = {
+  status: LocationStatus;
+  /** Position mesurée (même hors de Kinshasa). */
+  position: LatLng | null;
+  outsideKinshasa: boolean;
 };
 
 const AppContext = createContext<AppState | null>(null);
@@ -75,6 +98,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const update = useCallback((fn: (s: PersistedState) => PersistedState) => setState(fn), []);
 
+  const [measured, setLocation] = useState<UserLocation>({ status: 'inconnu', position: null, outsideKinshasa: false });
+  const locationAllowed = state.profile?.useLocation ?? true;
+  const location = useMemo<UserLocation>(
+    () => (locationAllowed ? measured : { status: 'desactivee', position: null, outsideKinshasa: false }),
+    [locationAllowed, measured],
+  );
+
+  const locate = useCallback(async (status: LocationStatus) => {
+    if (status !== 'accordee') {
+      setLocation({ status, position: null, outsideKinshasa: false });
+      return false;
+    }
+    const position = await readPosition();
+    setLocation({ status, position, outsideKinshasa: position ? !isInKinshasa(position) : false });
+    return position !== null;
+  }, []);
+
+  // Sans jamais afficher la demande du système : on lit seulement l'état de la permission.
+  useEffect(() => {
+    if (!hydrated || !locationAllowed) return;
+    readPermission().then(locate);
+  }, [hydrated, locationAllowed, locate]);
+
+  const requestLocation = useCallback(async () => {
+    if (!locationAllowed) update((s) => (s.profile ? { ...s, profile: { ...s.profile, useLocation: true } } : s));
+    return locate(await askPermission());
+  }, [locationAllowed, locate, update]);
+
+  const userPosition =
+    location.position && !location.outsideKinshasa ? location.position : DEFAULT_USER_POSITION;
+
   const value = useMemo<AppState>(
     () => ({
       ...state,
@@ -97,8 +151,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
           favorites: s.favorites.includes(id) ? s.favorites.filter((f) => f !== id) : [id, ...s.favorites],
         })),
       addReview: (review) => update((s) => ({ ...s, myReviews: [review, ...s.myReviews] })),
+      addRecentSearch: (query) => {
+        const q = query.trim();
+        if (q.length < 2) return;
+        update((s) => ({
+          ...s,
+          recentSearches: [q, ...s.recentSearches.filter((r) => r.toLowerCase() !== q.toLowerCase())].slice(
+            0,
+            MAX_RECENT_SEARCHES,
+          ),
+        }));
+      },
+      clearRecentSearches: () => update((s) => ({ ...s, recentSearches: [] })),
+      location,
+      requestLocation,
+      userPosition,
     }),
-    [state, hydrated, update],
+    [state, hydrated, update, location, requestLocation, userPosition],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -110,17 +179,17 @@ export function useApp(): AppState {
   return ctx;
 }
 
-/** Classement complet, recalculé quand l'utilisateur publie un avis. */
+/** Classement complet, recalculé quand l'utilisateur publie un avis ou se déplace. */
 export function useRanking(): RankedRestaurant[] | null {
-  const { myReviews } = useApp();
+  const { myReviews, userPosition } = useApp();
   const [ranking, setRanking] = useState<RankedRestaurant[] | null>(null);
   useEffect(() => {
     let alive = true;
-    getRanking(myReviews).then((r) => alive && setRanking(r));
+    getRanking(myReviews, userPosition).then((r) => alive && setRanking(r));
     return () => {
       alive = false;
     };
-  }, [myReviews]);
+  }, [myReviews, userPosition]);
   return ranking;
 }
 

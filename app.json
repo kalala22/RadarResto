@@ -33,6 +33,12 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Radar Resto Kin utilise votre position, seulement quand l’app est ouverte, pour afficher les restaurants proches et calculer les distances. Elle n’est jamais enregistrée."
+        }
       ]
     ],
     "experiments": {

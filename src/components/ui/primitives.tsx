@@ -107,25 +107,34 @@ export function Button({
   );
 }
 
-/** Puce de filtre (arrondi complet). */
+/** Puce de filtre (arrondi complet). `menu` ajoute un chevron : la puce ouvre un choix. */
 export function Chip({
   label,
   active,
   onPress,
   tone = 'clair',
+  icon,
+  menu,
+  accessibilityLabel,
 }: {
   label: string;
   active?: boolean;
   onPress?: () => void;
   tone?: 'clair' | 'carte';
+  icon?: IconName;
+  menu?: boolean;
+  accessibilityLabel?: string;
 }) {
+  const iconColor = active ? colors.surface : colors.encre;
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ selected: !!active }}
       onPress={onPress}
+      hitSlop={{ top: 4, bottom: 4 }}
       className={cx(
-        'h-9 justify-center rounded-full px-[14px]',
+        'h-9 flex-row items-center justify-center gap-[6px] rounded-full px-[14px]',
         active
           ? tone === 'carte'
             ? 'bg-nuit'
@@ -134,9 +143,11 @@ export function Chip({
             ? 'bg-surface'
             : 'border border-bordure-champ bg-surface',
       )}>
+      {icon ? <Icon name={icon} size={16} color={iconColor} /> : null}
       <RNText className={cx('text-[14px]', active ? 'font-texte-semi text-surface' : 'font-texte text-encre')}>
         {label}
       </RNText>
+      {menu ? <Icon name="chevron-down" size={14} color={iconColor} /> : null}
     </Pressable>
   );
 }

@@ -1,32 +1,19 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text as RNText, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { DirectionsSheet } from '@/components/directions-sheet';
+import { AMENITY_LABELS, PAYMENT_LABELS } from '@/components/labels';
 import { CriteriaBar, ReviewScore } from '@/components/restaurant';
 import { Icon } from '@/components/ui/icon';
 import { BackButton, Button, IconButton, ScoreBadge, Tag, Text, Thumbnail } from '@/components/ui/primitives';
 import { useApp, useRestaurant, useReviews } from '@/data/store';
-import { CRITERIA, type Amenity, type PaymentMethod, type Review } from '@/data/types';
-import { formatDistance, formatOpening, formatPriceLevel, formatPriceRange, formatScore } from '@/lib/format';
-import { callRestaurant, openDirections } from '@/lib/links';
+import { CRITERIA, type Review } from '@/data/types';
+import { formatDistance, formatHours, formatOpening, formatPriceLevel, formatPriceRange, formatScore } from '@/lib/format';
+import { driveMinutes } from '@/lib/geo';
+import { callRestaurant, shareRestaurant } from '@/lib/links';
 import { colors } from '@/theme/colors';
-
-const AMENITY_LABELS: Record<Amenity, string> = {
-  'groupe-electrogene': 'Groupe électrogène',
-  'parking-garde': 'Parking gardé',
-  terrasse: 'Terrasse',
-  'vue-fleuve': 'Vue sur le fleuve',
-  climatisation: 'Climatisation',
-  wifi: 'Wi-Fi',
-};
-
-const PAYMENT_LABELS: Record<PaymentMethod, string> = {
-  especes: 'Espèces',
-  'm-pesa': 'M-Pesa',
-  'orange-money': 'Orange Money',
-  'airtel-money': 'Airtel Money',
-  carte: 'Carte',
-};
 
 const avg = (r: Review) => CRITERIA.reduce((s, c) => s + r.ratings[c.key], 0) / CRITERIA.length;
 
@@ -35,7 +22,8 @@ export default function Fiche() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const restaurant = useRestaurant(id);
   const reviews = useReviews(id);
-  const { favorites, toggleFavorite, session } = useApp();
+  const { favorites, toggleFavorite, session, location } = useApp();
+  const [directionsOpen, setDirectionsOpen] = useState(false);
 
   if (restaurant === undefined) {
     return (
@@ -69,7 +57,8 @@ export default function Fiche() {
           <View className="absolute left-4" style={{ top: insets.top + 12 }}>
             <BackButton />
           </View>
-          <View className="absolute right-4" style={{ top: insets.top + 12 }}>
+          <View className="absolute right-4 flex-row gap-2" style={{ top: insets.top + 12 }}>
+            <IconButton icon="share" label="Partager" onPress={() => shareRestaurant(restaurant)} />
             <IconButton
               icon={isFav ? 'heart-filled' : 'heart'}
               color={isFav ? colors.vertRadar : colors.encre}
@@ -109,11 +98,37 @@ export default function Fiche() {
             </Text>
           </View>
 
-          <View className="flex-row flex-wrap gap-[6px]">
-            {restaurant.amenities.map((a) => (
-              <Tag key={a} label={AMENITY_LABELS[a]} />
-            ))}
-            <Tag label={restaurant.payments.map((p) => PAYMENT_LABELS[p]).join(' · ')} />
+          <View className="gap-2">
+            <Text className="font-texte-bold text-[15px]">À goûter</Text>
+            <View className="flex-row flex-wrap gap-[6px]">
+              {restaurant.dishes.map((d) => (
+                <Tag key={d} label={d} />
+              ))}
+            </View>
+          </View>
+
+          <View className="gap-2">
+            <Text className="font-texte-bold text-[15px]">Sur place</Text>
+            <View className="flex-row flex-wrap gap-[6px]">
+              {restaurant.amenities.map((a) => (
+                <Tag key={a} label={AMENITY_LABELS[a]} />
+              ))}
+            </View>
+            <Text variant="legende" className="text-texte-secondaire">
+              Paiement : {restaurant.payments.map((p) => PAYMENT_LABELS[p]).join(', ')}
+            </Text>
+          </View>
+
+          <View className="flex-row items-start gap-[10px]">
+            <View className="mt-[2px]">
+              <Icon name="clock" size={18} color={colors.vertRadar} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[14px]">Tous les jours, {formatHours(restaurant.hours)}</Text>
+              <Text variant="legende" className="text-texte-secondaire">
+                {formatOpening(restaurant.hours, now)}
+              </Text>
+            </View>
           </View>
 
           <View className="flex-row items-start gap-[10px]">
@@ -125,7 +140,11 @@ export default function Fiche() {
                 {restaurant.address}, {restaurant.commune}
               </Text>
               <Text variant="legende" className="text-texte-secondaire">
-                Repère : {restaurant.landmark} · {formatDistance(restaurant.distanceKm)}
+                Repère : {restaurant.landmark}
+              </Text>
+              <Text variant="legende" className="text-texte-secondaire">
+                {formatDistance(restaurant.distanceKm)} · environ {driveMinutes(restaurant.distanceKm)} min en voiture
+                {location.status === 'accordee' && !location.outsideKinshasa ? '' : ' depuis la Gombe'}
               </Text>
             </View>
           </View>
@@ -169,7 +188,7 @@ export default function Fiche() {
           <Button label="Appeler" variant="secondaire" size="m" onPress={() => callRestaurant(restaurant.phone)} />
         </View>
         <View className="flex-1">
-          <Button label="Itinéraire" variant="secondaire" size="m" onPress={() => openDirections(restaurant)} />
+          <Button label="Itinéraire" variant="secondaire" size="m" onPress={() => setDirectionsOpen(true)} />
         </View>
         <View className="flex-1">
           <Button
@@ -179,6 +198,7 @@ export default function Fiche() {
           />
         </View>
       </View>
+      <DirectionsSheet restaurant={restaurant} open={directionsOpen} onClose={() => setDirectionsOpen(false)} />
     </View>
   );
 }

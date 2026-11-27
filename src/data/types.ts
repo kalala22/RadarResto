@@ -47,6 +47,8 @@ export type Restaurant = {
   id: string;
   name: string;
   cuisine: string;
+  /** Plats phares, utilisés par la recherche (« liboke », « moambe »…). */
+  dishes: string[];
   commune: Commune;
   address: string;
   landmark: string;

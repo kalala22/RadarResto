@@ -47,6 +47,11 @@ export function formatOpening(hours: OpeningHours, date: Date): string {
     : `Fermé · ouvre à ${formatHour(hours.opens)}`;
 }
 
+/** « 11 h – 23 h », ou « 16 h – 2 h » pour une fermeture après minuit. */
+export function formatHours(hours: OpeningHours): string {
+  return `${formatHour(hours.opens)} – ${formatHour(hours.closes)}`;
+}
+
 const MONTHS = [
   'janvier',
   'février',
