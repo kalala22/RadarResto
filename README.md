@@ -1,56 +1,45 @@
-# Welcome to your Expo app 👋
+# Radar Resto Kin
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application mobile (Android et iOS) qui classe chaque mois les meilleurs restaurants de Kinshasa, avec une cote sur 10 : visites de l'équipe (60 %), avis clients vérifiés (20 %) et tendance Instagram (20 %).
 
-## Get started
+Maquette, charte graphique et plan d'implémentation : voir le projet Claude « RadarResto ».
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Démarrer
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Puis ouvrir l'app dans Expo Go, un simulateur, ou le navigateur (touche `w`).
 
-### Other setup steps
+## Vérifications
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npx expo lint        # lint
+npx tsc --noEmit     # types
+npm test             # tests unitaires (Jest)
+```
 
-## Learn more
+## Organisation
 
-To learn more about developing your project with Expo, look at the following resources:
+| Dossier | Contenu |
+| --- | --- |
+| `src/app/` | Écrans (Expo Router). `(auth)` : onboarding, inscription, connexion, code. `(tabs)` : classement, carte, favoris, profil. `restaurant/[id]` : fiche, avis, liste des avis. |
+| `src/components/` | Composants partagés : `ui/primitives.tsx` (texte, boutons, puces, champs), `restaurant.tsx`, logo, icônes. |
+| `src/data/` | Couche de données : types, données fictives, calcul de la cote, `repository.ts` (fonctions asynchrones), `store.tsx` (état gardé sur l'appareil). |
+| `src/lib/` | Formatage (cotes « 9,2 », prix en $ ou FC, téléphones +243), distances, liens Appeler/Itinéraire. |
+| `src/theme/` | Jetons de couleur de la charte (`tokens.json`), partagés avec `tailwind.config.js`. |
+| `assets/brand/` | Logos SVG de la charte. `assets/fonts/` : Archivo largeur 75 % (instances statiques, licence OFL). |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Style
 
-## Join the community
+- **Tailwind CSS** via NativeWind 4 (`className="bg-nuit text-surface"`). Couleurs, typographie (`font-titre`, `font-texte`, `font-chiffres`, `text-titre-1`…), rayons et espacements viennent de la charte, dans `tailwind.config.js`.
+- **Expo UI** (`@expo/ui`) pour les composants natifs : interrupteurs et listes déroulantes (paramètres, inscription). Voir le skill `.claude/skills/expo-ui`.
+- Règles de la charte : un seul élément safran par écran (le N° 1), `safran-texte` pour du safran en texte sur fond clair, `brique` réservé aux erreurs et à la suppression.
 
-Join our community of developers creating universal apps.
+## État actuel (phases 0 et 1)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Pas encore de backend : les restaurants et avis sont fictifs, la connexion par code est simulée (n'importe quel code à 6 chiffres), et favoris, avis et profil sont gardés sur le téléphone (AsyncStorage). Toutes les lectures passent par `src/data/repository.ts`, qui pourra appeler l'API plus tard sans toucher aux écrans.
+
+La carte est une carte simplifiée dessinée : la vraie carte (react-native-maps) et la position réelle arriveront avec la phase 5, qui demande un build de développement.
