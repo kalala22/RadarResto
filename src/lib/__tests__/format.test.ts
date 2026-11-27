@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import {
   formatDistance,
+  formatHours,
   formatPhone,
   formatPriceRange,
   formatScore,
@@ -40,6 +41,7 @@ describe('format', () => {
     expect(isOpenAt(hours, new Date(2026, 10, 27, 1, 30))).toBe(true);
     expect(isOpenAt(hours, new Date(2026, 10, 27, 3, 0))).toBe(false);
     expect(isOpenAt(hours, new Date(2026, 10, 27, 12, 0))).toBe(false);
+    expect(formatHours(hours)).toBe('16 h – 2 h');
   });
 
   it('tire les initiales du nom', () => {

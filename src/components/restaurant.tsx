@@ -12,12 +12,25 @@ import { ScoreBadge, Text, Thumbnail } from './ui/primitives';
 const openRestaurant = (id: string) => router.push({ pathname: '/restaurant/[id]', params: { id } });
 
 /** Encart du N° 1 : fond nuit et pastille safran (le seul safran de l'écran). */
-export function TopCard({ restaurant, label }: { restaurant: RankedRestaurant; label: string }) {
+export function TopCard({
+  restaurant,
+  label,
+  hint,
+  onOpen,
+}: {
+  restaurant: RankedRestaurant;
+  label: string;
+  hint?: string;
+  onOpen?: () => void;
+}) {
   return (
     <Pressable
       accessibilityRole="link"
       accessibilityLabel={`${label}, ${restaurant.name}, cote ${formatScore(restaurant.score.total)}`}
-      onPress={() => openRestaurant(restaurant.id)}
+      onPress={() => {
+        onOpen?.();
+        openRestaurant(restaurant.id);
+      }}
       className="flex-row items-center gap-[14px] rounded-l bg-nuit p-4 active:opacity-90">
       <Thumbnail name={restaurant.name} size={76} dark />
       <View className="min-w-0 flex-1">
@@ -28,6 +41,11 @@ export function TopCard({ restaurant, label }: { restaurant: RankedRestaurant; l
         <RNText className="mt-[2px] font-texte text-legende text-texte-sur-nuit">
           {restaurant.cuisine} · {formatPriceLevel(restaurant.priceLevel)} · {formatDistance(restaurant.distanceKm)}
         </RNText>
+        {hint ? (
+          <RNText className="mt-[2px] font-texte-semi text-legende text-menthe" numberOfLines={1}>
+            {hint}
+          </RNText>
+        ) : null}
       </View>
       <ScoreBadge value={restaurant.score.total} safran />
     </Pressable>
@@ -39,16 +57,24 @@ export function RestaurantRow({
   restaurant,
   rank,
   meta,
+  hint,
+  onOpen,
 }: {
   restaurant: RankedRestaurant;
   rank?: number;
   meta?: string;
+  /** Pourquoi ce résultat de recherche correspond (« Plat : Liboke de poisson »). */
+  hint?: string;
+  onOpen?: () => void;
 }) {
   return (
     <Pressable
       accessibilityRole="link"
       accessibilityLabel={`${rank ? `N° ${rank}, ` : ''}${restaurant.name}, cote ${formatScore(restaurant.score.total)}`}
-      onPress={() => openRestaurant(restaurant.id)}
+      onPress={() => {
+        onOpen?.();
+        openRestaurant(restaurant.id);
+      }}
       className="flex-row items-center gap-3 border-b border-bordure py-[11px] active:opacity-70">
       {rank !== undefined ? (
         <RNText className="w-[22px] font-chiffres text-[15px] text-texte-secondaire">{rank}</RNText>
@@ -62,6 +88,11 @@ export function RestaurantRow({
           {meta ??
             `${restaurant.cuisine} · ${restaurant.commune} · ${formatDistance(restaurant.distanceKm)}`}
         </Text>
+        {hint ? (
+          <Text variant="legende" className="text-vert-profond" numberOfLines={1}>
+            {hint}
+          </Text>
+        ) : null}
       </View>
       <RNText className="font-chiffres text-[16px] text-vert-radar">{formatScore(restaurant.score.total)}</RNText>
     </Pressable>

@@ -28,7 +28,7 @@ npm test             # tests unitaires (Jest)
 | `src/app/` | Écrans (Expo Router). `(auth)` : onboarding, inscription, connexion, code. `(tabs)` : classement, carte, favoris, profil. `restaurant/[id]` : fiche, avis, liste des avis. |
 | `src/components/` | Composants partagés : `ui/primitives.tsx` (texte, boutons, puces, champs), `restaurant.tsx`, logo, icônes. |
 | `src/data/` | Couche de données : types, données fictives, calcul de la cote, `repository.ts` (fonctions asynchrones), `store.tsx` (état gardé sur l'appareil). |
-| `src/lib/` | Formatage (cotes « 9,2 », prix en $ ou FC, téléphones +243), distances, liens Appeler/Itinéraire. |
+| `src/lib/` | Formatage (cotes « 9,2 », prix en $ ou FC, téléphones +243), distances, position, liens Appeler/Itinéraire/Partager. |
 | `src/theme/` | Jetons de couleur de la charte (`tokens.json`), partagés avec `tailwind.config.js`. |
 | `assets/brand/` | Logos SVG de la charte. `assets/fonts/` : Archivo largeur 75 % (instances statiques, licence OFL). |
 
@@ -38,8 +38,12 @@ npm test             # tests unitaires (Jest)
 - **Expo UI** (`@expo/ui`) pour les composants natifs : interrupteurs et listes déroulantes (paramètres, inscription). Voir le skill `.claude/skills/expo-ui`.
 - Règles de la charte : un seul élément safran par écran (le N° 1), `safran-texte` pour du safran en texte sur fond clair, `brique` réservé aux erreurs et à la suppression.
 
-## État actuel (phases 0 et 1)
+## État actuel (phases 0, 1, 4 et 5)
 
 Pas encore de backend : les restaurants et avis sont fictifs, la connexion par code est simulée (n'importe quel code à 6 chiffres), et favoris, avis et profil sont gardés sur le téléphone (AsyncStorage). Toutes les lectures passent par `src/data/repository.ts`, qui pourra appeler l'API plus tard sans toucher aux écrans.
 
-La carte est une carte simplifiée dessinée : la vraie carte (react-native-maps) et la position réelle arriveront avec la phase 5, qui demande un build de développement.
+Recherche (`src/data/search.ts`) : par nom, plat, cuisine, quartier ou adresse, sans tenir compte des accents ; filtres commune, prix, ouvert, cote minimale, équipements et « Près de moi ».
+
+Carte : react-native-maps (Google Maps sur Android, Plans sur iPhone), avec une version dessinée pour le web (`restaurant-map.web.tsx`). La position (expo-location) n'est demandée qu'après une explication, au premier plan seulement, et n'est jamais enregistrée. Sans position, ou hors de Kinshasa, les distances partent de la Gombe.
+
+La carte fonctionne dans Expo Go. Pour un build Android (EAS), il faut une clé Google Maps SDK for Android dans la variable `GOOGLE_MAPS_ANDROID_API_KEY` (secret EAS), lue par `app.config.js`. iOS n'en a pas besoin.

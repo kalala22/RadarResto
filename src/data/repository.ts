@@ -29,8 +29,11 @@ export function rankRestaurants(
 }
 
 /** Les avis enregistrés sur l'appareil s'ajoutent aux avis fictifs. */
-export async function getRanking(localReviews: Review[] = []): Promise<RankedRestaurant[]> {
-  return rankRestaurants(MOCK_RESTAURANTS, [...MOCK_REVIEWS, ...localReviews]);
+export async function getRanking(
+  localReviews: Review[] = [],
+  position: LatLng = DEFAULT_USER_POSITION,
+): Promise<RankedRestaurant[]> {
+  return rankRestaurants(MOCK_RESTAURANTS, [...MOCK_REVIEWS, ...localReviews], position);
 }
 
 export async function getReviews(restaurantId: string, localReviews: Review[] = []): Promise<Review[]> {

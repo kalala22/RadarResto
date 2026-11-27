@@ -53,7 +53,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 
 export default function Parametres() {
   const insets = useSafeAreaInsets();
-  const { profile, session, updateProfile, signOut, deleteAccount } = useApp();
+  const { profile, session, updateProfile, signOut, deleteAccount, requestLocation } = useApp();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!session || !profile) {
@@ -162,7 +162,10 @@ export default function Parametres() {
             <Toggle value={profile.notifications.offres} onChange={(v) => setNotif('offres', v)} />
           </Row>
           <Row label="Utiliser ma position" hint="Seulement quand l’app est ouverte">
-            <Toggle value={profile.useLocation} onChange={(v) => updateProfile({ useLocation: v })} />
+            <Toggle
+              value={profile.useLocation}
+              onChange={(v) => (v ? requestLocation() : updateProfile({ useLocation: false }))}
+            />
           </Row>
           <Row label="Avis publiés avec mon nom" hint="Sinon : « Membre vérifié »">
             <Toggle value={profile.publicName} onChange={(v) => updateProfile({ publicName: v })} />

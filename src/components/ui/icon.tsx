@@ -24,7 +24,12 @@ export type IconName =
   | 'close'
   | 'check'
   | 'lock'
-  | 'award';
+  | 'award'
+  | 'share'
+  | 'sliders'
+  | 'chevron-down'
+  | 'clock'
+  | 'history';
 
 type Props = {
   name: IconName;
@@ -165,6 +170,37 @@ function renderIcon(name: IconName, p: Record<string, unknown>, color: string) {
         <>
           <Circle cx={12} cy={9} r={6} {...p} />
           <Path d="m8.5 14-1.5 8 5-3 5 3-1.5-8" {...p} />
+        </>
+      );
+    case 'share':
+      return (
+        <>
+          <Path d="M12 15V3M7 8l5-5 5 5" {...p} />
+          <Path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" {...p} />
+        </>
+      );
+    case 'sliders':
+      return (
+        <>
+          <Path d="M4 7h10M18 7h2M4 17h4M12 17h8" {...p} />
+          <Circle cx={16} cy={7} r={2} {...p} />
+          <Circle cx={10} cy={17} r={2} {...p} />
+        </>
+      );
+    case 'chevron-down':
+      return <Path d="m6 9 6 6 6-6" {...p} />;
+    case 'clock':
+      return (
+        <>
+          <Circle cx={12} cy={12} r={9} {...p} />
+          <Path d="M12 7v5l3 2" {...p} />
+        </>
+      );
+    case 'history':
+      return (
+        <>
+          <Path d="M3 12a9 9 0 1 0 3-6.7L3 8" {...p} />
+          <Path d="M3 3v5h5M12 8v4l3 2" {...p} />
         </>
       );
   }
